@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погода в Китае</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .city-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .city-card:hover {
+            transform: translateY(-5px);
+        }
+        .city-name {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .temp {
+            font-size: 3em;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .description {
+            font-size: 1.1em;
+            color: #666;
+            text-transform: capitalize;
+            margin-bottom: 15px;
+        }
+        .details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .detail-item {
+            text-align: center;
+        }
+        .detail-label {
+            font-size: 0.85em;
+            color: #999;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 500;
+        }
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+        }
+        .error {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: #e74c3c;
+        }
+        .update-time {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌤️ Погода в Китае</h1>
+        <div id="weather-container" class="loading">Загрузка погоды...</div>
+        <div class="update-time" id="update-time"></div>
+    </div>
+
+    <script>
+        const cities = [
+            { name: 'Пекин', lat: 39.9042, lon: 116.4074 },
+            { name: 'Шанхай', lat: 31.2304, lon: 121.4737 },
+            { name: 'Гуанчжоу', lat: 23.1291, lon: 113.2644 }
+        ];
+
+        async function getWeather(city) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=Asia/Shanghai`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            const weatherCodes = {
+                0: '☀️ Ясно',
+                1: '🌤️ Малооблачно',
+                2: '⛅ Переменная облачность',
+                3: '☁️ Облачно',
+                45: '🌫️ Туман',
+                48: '🌫️ Изморозь',
+                51: '🌦️ Небольшая морось',
+                53: '🌦️ Морось',
+                55: '🌧️ Сильная морось',
+                61: '🌧️ Небольшой дождь',
+                63: '🌧️ Дождь',
+                65: '⛈️ Сильный дождь',
+                71: '🌨️ Небольшой снег',
+                73: '❄️ Снег',
+                75: '❄️ Сильный снег',
+                95: '⛈️ Гроза'
+            };
+            
+            return {
+                name: city.name,
+                temp: Math.round(data.current.temperature_2m),
+                humidity: data.current.relative_humidity_2m,
+                wind: data.current.wind_speed_10m,
+                description: weatherCodes[data.current.weather_code] || '🌍 Неизвестно'
+            };
+        }
+
+        async function displayWeather() {
+            const container = document.getElementById('weather-container');
+            const updateTime = document.getElementById('update-time');
+            
+            try {
+                const weatherData = await Promise.all(cities.map(city => getWeather(city)));
+                
+                container.className = 'weather-grid';
+                container.innerHTML = weatherData.map(data => `
+                    <div class="city-card">
+                        <div class="city-name">${data.name}</div>
+                        <div class="temp">${data.temp}°C</div>
+                        <div class="description">${data.description}</div>
+                        <div class="details">
+                            <div class="detail-item">
+                                <div class="detail-label">Влажность</div>
+                                <div class="detail-value">${data.humidity}%</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Ветер</div>
+                                <div class="detail-value">${data.wind} км/ч</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                const now = new Date().toLocaleString('ru-RU', { 
+                    timeZone: 'Asia/Shanghai',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                updateTime.textContent = `Обновлено: ${now} (время Китая)`;
+                
+            } catch (error) {
+                container.className = 'error';
+                container.innerHTML = `<p>Ошибка загрузки данных: ${error.message}</p>`;
+            }
+        }
+
+        displayWeather();
+        setInterval(displayWeather, 600000); // обновление каждые 10 минут
+    </script>
+</body>
+</html>
