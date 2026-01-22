@@ -61,6 +61,17 @@
             font-size: 1.1em;
             color: #666;
             text-transform: capitalize;
+            margin-bottom: 10px;
+        }
+        .feels-like {
+            font-size: 0.95em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .comfort {
+            font-size: 1em;
+            color: #764ba2;
+            font-weight: 500;
             margin-bottom: 15px;
         }
         .details {
@@ -118,7 +129,7 @@
         ];
 
         async function getWeather(city) {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=Asia/Shanghai`;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&timezone=Asia/Shanghai`;
             
             const response = await fetch(url);
             const data = await response.json();
@@ -145,10 +156,21 @@
             return {
                 name: city.name,
                 temp: Math.round(data.current.temperature_2m),
+                feelsLike: Math.round(data.current.apparent_temperature),
                 humidity: data.current.relative_humidity_2m,
                 wind: data.current.wind_speed_10m,
                 description: weatherCodes[data.current.weather_code] || '🌍 Неизвестно'
             };
+        }
+
+        function getComfortDescription(feelsLike) {
+            if (feelsLike < -10) return '🥶 Очень холодно';
+            if (feelsLike < 0) return '❄️ Холодно';
+            if (feelsLike < 10) return '🧥 Прохладно';
+            if (feelsLike < 20) return '😊 Комфортно';
+            if (feelsLike < 28) return '🌡️ Тепло';
+            if (feelsLike < 35) return '🔥 Жарко';
+            return '♨️ Очень жарко';
         }
 
         async function displayWeather() {
@@ -164,6 +186,8 @@
                         <div class="city-name">${data.name}</div>
                         <div class="temp">${data.temp}°C</div>
                         <div class="description">${data.description}</div>
+                        <div class="feels-like">Ощущается как ${data.feelsLike}°C</div>
+                        <div class="comfort">${getComfortDescription(data.feelsLike)}</div>
                         <div class="details">
                             <div class="detail-item">
                                 <div class="detail-label">Влажность</div>
