@@ -66,13 +66,24 @@
         .feels-like {
             font-size: 0.95em;
             color: #888;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         .comfort {
-            font-size: 1em;
+            font-size: 1.05em;
             color: #764ba2;
-            font-weight: 500;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .clothes-advice {
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.6;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
             margin-bottom: 15px;
+            border-left: 3px solid #667eea;
         }
         .details {
             display: flex;
@@ -123,9 +134,9 @@
 
     <script>
         const cities = [
-            { name: 'Пекин', lat: 39.9042, lon: 116.4074 },
-            { name: 'Шанхай', lat: 31.2304, lon: 121.4737 },
-            { name: 'Гуанчжоу', lat: 23.1291, lon: 113.2644 }
+            { name: 'Пекин', lat: 39.9042, lon: 116.4074, climate: 'continental' },
+            { name: 'Шанхай', lat: 31.2304, lon: 121.4737, climate: 'humid_subtropical' },
+            { name: 'Гуанчжоу', lat: 23.1291, lon: 113.2644, climate: 'tropical' }
         ];
 
         async function getWeather(city) {
@@ -159,18 +170,93 @@
                 feelsLike: Math.round(data.current.apparent_temperature),
                 humidity: data.current.relative_humidity_2m,
                 wind: data.current.wind_speed_10m,
-                description: weatherCodes[data.current.weather_code] || '🌍 Неизвестно'
+                description: weatherCodes[data.current.weather_code] || '🌍 Неизвестно',
+                climate: city.climate
             };
         }
 
-        function getComfortDescription(feelsLike) {
-            if (feelsLike < -10) return '🥶 Очень холодно';
-            if (feelsLike < 0) return '❄️ Холодно';
-            if (feelsLike < 10) return '🧥 Прохладно';
-            if (feelsLike < 20) return '😊 Комфортно';
-            if (feelsLike < 28) return '🌡️ Тепло';
-            if (feelsLike < 35) return '🔥 Жарко';
-            return '♨️ Очень жарко';
+        function getWeatherAdvice(data) {
+            const { feelsLike, humidity, wind, climate } = data;
+            
+            // Корректировка ощущений в зависимости от климата
+            let adjustedFeels = feelsLike;
+            
+            // В континентальном климате (Пекин) - сухой холод режет сильнее
+            if (climate === 'continental') {
+                if (feelsLike < 15 && wind > 15) {
+                    adjustedFeels -= 3; // ветер пронизывает насквозь
+                }
+                if (feelsLike < 5) {
+                    adjustedFeels -= 2; // сухой холод режет сильнее
+                }
+            }
+            
+            // Во влажном субтропическом (Шанхай) - влажность усиливает всё
+            if (climate === 'humid_subtropical') {
+                if (humidity > 70) {
+                    if (feelsLike < 15) {
+                        adjustedFeels -= 4; // влажный холод пробирает до костей
+                    } else if (feelsLike > 28) {
+                        adjustedFeels += 3; // влажная жара невыносима
+                    }
+                }
+            }
+            
+            // В тропическом (Гуанчжоу) - влажность + жара = баня
+            if (climate === 'tropical') {
+                if (humidity > 75 && feelsLike > 25) {
+                    adjustedFeels += 4; // тропическая баня
+                }
+            }
+            
+            // Определяем ощущения и одежду
+            let feeling = '';
+            let clothes = '';
+            
+            if (adjustedFeels < -10) {
+                feeling = '🥶 Очень холодно - пронизывающий мороз';
+                clothes = 'Тяжёлый пуховик, термобельё, шапка-ушанка, шарф на лицо, перчатки и утеплённые ботинки. Не стойте долго на улице!';
+            } else if (adjustedFeels < 0) {
+                feeling = '❄️ Холодно - мороз чувствуется';
+                if (climate === 'continental') {
+                    clothes = 'Зимняя куртка, тёплый свитер, шапка, шарф и перчатки. Сухой воздух - губы и руки сохнут, берите бальзам!';
+                } else {
+                    clothes = 'Пуховик, шапка, шарф и перчатки. Влажность делает холод пронизывающим - одевайтесь теплее!';
+                }
+            } else if (adjustedFeels < 10) {
+                feeling = '🧥 Прохладно - пробирает';
+                if (climate === 'continental' || climate === 'humid_subtropical') {
+                    clothes = 'Тёплая куртка или пальто, свитер, джинсы. Влажность может проникать под одежду - одевайтесь слоями!';
+                } else {
+                    clothes = 'Лёгкая куртка, кофта. В тропиках это редкость - наслаждайтесь прохладой!';
+                }
+            } else if (adjustedFeels < 18) {
+                feeling = '😊 Комфортно - приятная погода';
+                clothes = 'Лёгкая кофта или рубашка с длинным рукавом, джинсы. Идеальная погода для прогулок!';
+            } else if (adjustedFeels < 25) {
+                feeling = '🌡️ Тепло - комфортно';
+                if (humidity > 70) {
+                    clothes = 'Футболка, лёгкие брюки или шорты. Влажность ощущается - берите воду!';
+                } else {
+                    clothes = 'Футболка, джинсы или лёгкие брюки. Приятная тёплая погода!';
+                }
+            } else if (adjustedFeels < 32) {
+                feeling = '🔥 Жарко - духота чувствуется';
+                if (climate === 'tropical' || climate === 'humid_subtropical') {
+                    clothes = 'Лёгкая дышащая одежда, шорты, сандалии. Влажность высокая - как в бане! Обязательно берите воду, зонт от солнца и ищите кондиционеры.';
+                } else {
+                    clothes = 'Футболка, шорты, головной убор. Сухая жара - пейте много воды и берите солнцезащитный крем!';
+                }
+            } else {
+                feeling = '♨️ Очень жарко - тропическое пекло';
+                if (climate === 'tropical' || climate === 'humid_subtropical') {
+                    clothes = 'Минимум лёгкой одежды из натуральных тканей. Влажность запредельная - дышать тяжело! Постоянно пейте воду, ищите тень и кондиционеры. Без крайней нужды лучше не выходить.';
+                } else {
+                    clothes = 'Лёгкая одежда, обязательно головной убор. Экстремальная жара - избегайте солнца с 11 до 16 часов!';
+                }
+            }
+            
+            return { feeling, clothes };
         }
 
         async function displayWeather() {
@@ -181,13 +267,16 @@
                 const weatherData = await Promise.all(cities.map(city => getWeather(city)));
                 
                 container.className = 'weather-grid';
-                container.innerHTML = weatherData.map(data => `
+                container.innerHTML = weatherData.map(data => {
+                    const advice = getWeatherAdvice(data);
+                    return `
                     <div class="city-card">
                         <div class="city-name">${data.name}</div>
                         <div class="temp">${data.temp}°C</div>
                         <div class="description">${data.description}</div>
                         <div class="feels-like">Ощущается как ${data.feelsLike}°C</div>
-                        <div class="comfort">${getComfortDescription(data.feelsLike)}</div>
+                        <div class="comfort">${advice.feeling}</div>
+                        <div class="clothes-advice">${advice.clothes}</div>
                         <div class="details">
                             <div class="detail-item">
                                 <div class="detail-label">Влажность</div>
@@ -199,7 +288,8 @@
                             </div>
                         </div>
                     </div>
-                `).join('');
+                `;
+                }).join('');
                 
                 const now = new Date().toLocaleString('ru-RU', { 
                     timeZone: 'Asia/Shanghai',
