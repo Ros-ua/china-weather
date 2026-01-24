@@ -51,6 +51,42 @@
             margin-bottom: 15px;
             font-weight: 600;
         }
+        .ad-block {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .ad-block:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .ad-block a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+        .ad-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 4px;
+        }
+        .ad-subtitle {
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.75);
+        }
+        .ad-placeholder {
+            background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%);
+            cursor: default;
+        }
+        .ad-placeholder:hover {
+            transform: none;
+            box-shadow: none;
+        }
         .temp {
             font-size: 3em;
             color: #667eea;
@@ -267,11 +303,33 @@
                 const weatherData = await Promise.all(cities.map(city => getWeather(city)));
                 
                 container.className = 'weather-grid';
-                container.innerHTML = weatherData.map(data => {
+                container.innerHTML = weatherData.map((data, index) => {
                     const advice = getWeatherAdvice(data);
+                    
+                    // Рекламные блоки для каждого города
+                    let adBlock = '';
+                    if (index === 0) { // Пекин - VPN реклама
+                        adBlock = `
+                            <div class="ad-block">
+                                <a href="https://zgcvpn.com/" target="_blank" rel="noopener noreferrer">
+                                    <div class="ad-title">🔒 Нужен VPN в Китае?</div>
+                                    <div class="ad-subtitle">ZGC VPN - надёжный доступ →</div>
+                                </a>
+                            </div>
+                        `;
+                    } else { // Шанхай и Гуанчжоу - заглушки
+                        adBlock = `
+                            <div class="ad-block ad-placeholder">
+                                <div class="ad-title">📢 Тут может быть</div>
+                                <div class="ad-subtitle">ваша реклама</div>
+                            </div>
+                        `;
+                    }
+                    
                     return `
                     <div class="city-card">
                         <div class="city-name">${data.name}</div>
+                        ${adBlock}
                         <div class="temp">${data.temp}°C</div>
                         <div class="description">${data.description}</div>
                         <div class="feels-like">Ощущается как ${data.feelsLike}°C</div>
