@@ -215,6 +215,24 @@
         .history-button:active {
             transform: translateY(0);
         }
+        .today-button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .today-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        .today-button:active {
+            transform: translateY(0);
+        }
         .history-results {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -276,7 +294,8 @@
         <div class="history-title">📅 История погоды</div>
         <div class="date-picker">
             <input type="date" id="history-date" class="date-input" max="">
-            <button onclick="loadHistoricalWeather()" class="history-button">Показать погоду</button>
+            <button onclick="loadHistoricalWeather()" class="history-button">Показать</button>
+            <button onclick="showToday()" class="today-button">🏠 Сегодня</button>
         </div>
         <div class="date-note">Доступны данные с января 2022 года</div>
         <div id="history-results"></div>
@@ -486,12 +505,14 @@
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
         document.getElementById('history-date').max = todayStr;
-        
-        // Установка даты по умолчанию (сегодня)
         document.getElementById('history-date').value = todayStr;
-        
-        // Автоматическая загрузка данных за сегодня
-        loadHistoricalWeather();
+
+        function showToday() {
+            // Скрываем исторический раздел и показываем текущую погоду
+            document.getElementById('weather-container').style.display = 'grid';
+            document.getElementById('update-time').style.display = 'block';
+            document.getElementById('history-results').innerHTML = '';
+        }
 
         async function loadHistoricalWeather() {
             const dateInput = document.getElementById('history-date').value;
@@ -499,6 +520,10 @@
                 alert('Пожалуйста, выберите дату');
                 return;
             }
+
+            // Скрываем текущую погоду
+            document.getElementById('weather-container').style.display = 'none';
+            document.getElementById('update-time').style.display = 'none';
 
             const resultsContainer = document.getElementById('history-results');
             resultsContainer.innerHTML = '<div class="loading-history">⏳ Загрузка исторических данных...</div>';
