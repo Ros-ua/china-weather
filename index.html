@@ -290,17 +290,6 @@
         <div class="update-time" id="update-time"></div>
     </div>
 
-    <div class="history-section">
-        <div class="history-title">📅 История погоды</div>
-        <div class="date-picker">
-            <input type="date" id="history-date" class="date-input" max="">
-            <button onclick="loadHistoricalWeather()" class="history-button">Показать</button>
-            <button onclick="showToday()" class="today-button">🏠 Сегодня</button>
-        </div>
-        <div class="date-note">Доступны данные с января 2022 года</div>
-        <div id="history-results"></div>
-    </div>
-
     <script>
         const cities = [
             { name: 'Пекин', lat: 39.9042, lon: 116.4074, climate: 'continental' },
