@@ -272,6 +272,16 @@
         <div class="update-time" id="update-time"></div>
     </div>
 
+    <div class="history-section">
+        <div class="history-title">📅 История погоды</div>
+        <div class="date-picker">
+            <input type="date" id="history-date" class="date-input" max="">
+            <button onclick="loadHistoricalWeather()" class="history-button">Показать погоду</button>
+        </div>
+        <div class="date-note">Доступны данные с января 2022 года</div>
+        <div id="history-results"></div>
+    </div>
+
     <script>
         const cities = [
             { name: 'Пекин', lat: 39.9042, lon: 116.4074, climate: 'continental' },
@@ -471,6 +481,74 @@
 
         displayWeather();
         setInterval(displayWeather, 600000); // обновление каждые 10 минут
+
+        // Установка максимальной даты для date picker (сегодня)
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        document.getElementById('history-date').max = todayStr;
+        
+        // Установка даты по умолчанию (сегодня)
+        document.getElementById('history-date').value = todayStr;
+        
+        // Автоматическая загрузка данных за сегодня
+        loadHistoricalWeather();
+
+        async function loadHistoricalWeather() {
+            const dateInput = document.getElementById('history-date').value;
+            if (!dateInput) {
+                alert('Пожалуйста, выберите дату');
+                return;
+            }
+
+            const resultsContainer = document.getElementById('history-results');
+            resultsContainer.innerHTML = '<div class="loading-history">⏳ Загрузка исторических данных...</div>';
+
+            try {
+                const historicalData = await Promise.all(cities.map(async (city) => {
+                    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${city.lat}&longitude=${city.lon}&start_date=${dateInput}&end_date=${dateInput}&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,wind_speed_10m_max&timezone=Asia/Shanghai`;
+                    
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    return {
+                        name: city.name,
+                        tempMax: Math.round(data.daily.temperature_2m_max[0]),
+                        tempMin: Math.round(data.daily.temperature_2m_min[0]),
+                        tempMean: Math.round(data.daily.temperature_2m_mean[0]),
+                        precipitation: data.daily.precipitation_sum[0],
+                        windMax: data.daily.wind_speed_10m_max[0]
+                    };
+                }));
+
+                const selectedDate = new Date(dateInput);
+                const formattedDate = selectedDate.toLocaleDateString('ru-RU', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+
+                resultsContainer.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; color: #667eea; font-size: 1.2em; margin-bottom: 10px; font-weight: 600;">
+                        ${formattedDate}
+                    </div>
+                ` + historicalData.map(data => `
+                    <div class="history-card">
+                        <div class="history-card-title">${data.name}</div>
+                        <div class="history-temp">${data.tempMean}°C</div>
+                        <div class="history-detail">🌡️ Макс: ${data.tempMax}°C / Мин: ${data.tempMin}°C</div>
+                        <div class="history-detail">💨 Ветер: до ${data.windMax.toFixed(1)} км/ч</div>
+                        <div class="history-detail">
+                            ${data.precipitation > 0 
+                                ? `🌧️ Осадки: ${data.precipitation.toFixed(1)} мм` 
+                                : '☀️ Без осадков'}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                resultsContainer.innerHTML = `<div class="error-history">❌ Ошибка загрузки данных: ${error.message}</div>`;
+            }
+        }
     </script>
 </body>
 </html>
