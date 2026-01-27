@@ -159,6 +159,21 @@
             margin-top: 20px;
             font-size: 0.9em;
         }
+        .data-source {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            margin-top: 8px;
+            font-size: 0.85em;
+        }
+        .data-source a {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.4);
+        }
+        .data-source a:hover {
+            color: white;
+            border-bottom-color: white;
+        }
     </style>
 </head>
 <body>
@@ -166,6 +181,7 @@
         <h1>🌤️ Погода в Китае</h1>
         <div id="weather-container" class="loading">Загрузка погоды...</div>
         <div class="update-time" id="update-time"></div>
+        <div class="data-source" id="data-source"></div>
     </div>
 
     <script>
@@ -298,6 +314,7 @@
         async function displayWeather() {
             const container = document.getElementById('weather-container');
             const updateTime = document.getElementById('update-time');
+            const dataSource = document.getElementById('data-source');
             
             try {
                 const weatherData = await Promise.all(cities.map(city => getWeather(city)));
@@ -358,6 +375,7 @@
                     year: 'numeric'
                 });
                 updateTime.textContent = `Обновлено: ${now} (время Китая)`;
+                dataSource.innerHTML = `Источник данных: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a>`;
                 
             } catch (error) {
                 container.className = 'error';
