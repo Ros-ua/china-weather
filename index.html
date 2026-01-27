@@ -14,14 +14,11 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
-        .container {
-            max-width: 800px;
-            width: 100%;
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
         h1 {
             color: white;
@@ -29,6 +26,17 @@
             margin-bottom: 30px;
             font-size: 2.5em;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            align-items: start;
+        }
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
         }
         .weather-grid {
             display: grid;
@@ -141,6 +149,137 @@
             color: #333;
             font-weight: 500;
         }
+        
+        /* Историческая погода */
+        .history-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+        .history-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .date-selectors {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .date-selector {
+            flex: 1;
+            min-width: 80px;
+        }
+        .date-selector label {
+            display: block;
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .date-selector select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .date-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .city-selector {
+            margin-bottom: 20px;
+        }
+        .city-selector label {
+            display: block;
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .city-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .city-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .history-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+        .history-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .history-button:active {
+            transform: translateY(0);
+        }
+        .history-result {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 3px solid #667eea;
+        }
+        .history-result.loading {
+            text-align: center;
+            color: #999;
+        }
+        .history-result.error {
+            border-left-color: #e74c3c;
+            color: #e74c3c;
+        }
+        .history-date {
+            font-size: 1.1em;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .history-temp {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .history-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .history-detail-item {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .history-detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
         .loading {
             text-align: center;
             color: white;
@@ -177,11 +316,85 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="main-container">
         <h1>🌤️ Погода в Китае</h1>
-        <div id="weather-container" class="loading">Загрузка погоды...</div>
-        <div class="update-time" id="update-time"></div>
-        <div class="data-source" id="data-source"></div>
+        
+        <div class="content-wrapper">
+            <div>
+                <div id="weather-container" class="loading">Загрузка погоды...</div>
+                <div class="update-time" id="update-time"></div>
+                <div class="data-source" id="data-source"></div>
+            </div>
+            
+            <div class="history-card">
+                <div class="history-title">📅 Историческая погода</div>
+                
+                <div class="city-selector">
+                    <label>Город:</label>
+                    <select id="history-city">
+                        <option value="0">Пекин</option>
+                        <option value="1">Шанхай</option>
+                        <option value="2">Гуанчжоу</option>
+                    </select>
+                </div>
+                
+                <div class="date-selectors">
+                    <div class="date-selector">
+                        <label>Год:</label>
+                        <select id="history-year"></select>
+                    </div>
+                    <div class="date-selector">
+                        <label>Месяц:</label>
+                        <select id="history-month">
+                            <option value="1">Январь</option>
+                            <option value="2">Февраль</option>
+                            <option value="3">Март</option>
+                            <option value="4">Апрель</option>
+                            <option value="5">Май</option>
+                            <option value="6">Июнь</option>
+                            <option value="7">Июль</option>
+                            <option value="8">Август</option>
+                            <option value="9">Сентябрь</option>
+                            <option value="10">Октябрь</option>
+                            <option value="11">Ноябрь</option>
+                            <option value="12">Декабрь</option>
+                        </select>
+                    </div>
+                    <div class="date-selector">
+                        <label>День:</label>
+                        <select id="history-day"></select>
+                    </div>
+                </div>
+                
+                <button class="history-button" onclick="loadHistoricalWeather()">
+                    🔍 Показать погоду
+                </button>
+                
+                <div id="history-result" class="history-result" style="display: none;">
+                    <div class="history-date" id="history-result-date"></div>
+                    <div class="history-temp" id="history-result-temp"></div>
+                    <div class="description" id="history-result-desc"></div>
+                    <div class="history-details">
+                        <div class="history-detail-item">
+                            <span class="history-detail-label">Макс:</span>
+                            <span id="history-max-temp"></span>
+                        </div>
+                        <div class="history-detail-item">
+                            <span class="history-detail-label">Мин:</span>
+                            <span id="history-min-temp"></span>
+                        </div>
+                        <div class="history-detail-item">
+                            <span class="history-detail-label">Ветер:</span>
+                            <span id="history-wind"></span>
+                        </div>
+                        <div class="history-detail-item">
+                            <span class="history-detail-label">Осадки:</span>
+                            <span id="history-rain"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -190,6 +403,49 @@
             { name: 'Шанхай', lat: 31.2304, lon: 121.4737, climate: 'humid_subtropical' },
             { name: 'Гуанчжоу', lat: 23.1291, lon: 113.2644, climate: 'tropical' }
         ];
+
+        // Инициализация селекторов даты
+        function initializeDateSelectors() {
+            const yearSelect = document.getElementById('history-year');
+            const daySelect = document.getElementById('history-day');
+            const currentYear = new Date().getFullYear();
+            
+            // Заполняем годы (с 1940 по текущий год)
+            for (let year = currentYear; year >= 1940; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            
+            // Заполняем дни
+            updateDays();
+            
+            // Обновляем дни при изменении месяца или года
+            document.getElementById('history-month').addEventListener('change', updateDays);
+            document.getElementById('history-year').addEventListener('change', updateDays);
+        }
+
+        function updateDays() {
+            const daySelect = document.getElementById('history-day');
+            const month = parseInt(document.getElementById('history-month').value);
+            const year = parseInt(document.getElementById('history-year').value);
+            
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const currentDay = daySelect.value;
+            
+            daySelect.innerHTML = '';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const option = document.createElement('option');
+                option.value = day;
+                option.textContent = day;
+                daySelect.appendChild(option);
+            }
+            
+            if (currentDay && currentDay <= daysInMonth) {
+                daySelect.value = currentDay;
+            }
+        }
 
         async function getWeather(city) {
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&timezone=Asia/Shanghai`;
@@ -227,41 +483,121 @@
             };
         }
 
+        async function loadHistoricalWeather() {
+            const resultDiv = document.getElementById('history-result');
+            const cityIndex = parseInt(document.getElementById('history-city').value);
+            const year = document.getElementById('history-year').value;
+            const month = document.getElementById('history-month').value.padStart(2, '0');
+            const day = document.getElementById('history-day').value.padStart(2, '0');
+            
+            const date = `${year}-${month}-${day}`;
+            const city = cities[cityIndex];
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'history-result loading';
+            resultDiv.innerHTML = '⏳ Загрузка данных...';
+            
+            try {
+                const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${city.lat}&longitude=${city.lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,wind_speed_10m_max,weather_code&timezone=Asia/Shanghai`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (!data.daily || !data.daily.temperature_2m_mean[0]) {
+                    throw new Error('Данные за эту дату недоступны');
+                }
+                
+                const weatherCodes = {
+                    0: '☀️ Ясно',
+                    1: '🌤️ Малооблачно',
+                    2: '⛅ Переменная облачность',
+                    3: '☁️ Облачно',
+                    45: '🌫️ Туман',
+                    48: '🌫️ Изморозь',
+                    51: '🌦️ Небольшая морось',
+                    53: '🌦️ Морось',
+                    55: '🌧️ Сильная морось',
+                    61: '🌧️ Небольшой дождь',
+                    63: '🌧️ Дождь',
+                    65: '⛈️ Сильный дождь',
+                    71: '🌨️ Небольшой снег',
+                    73: '❄️ Снег',
+                    75: '❄️ Сильный снег',
+                    95: '⛈️ Гроза'
+                };
+                
+                resultDiv.className = 'history-result';
+                
+                const avgTemp = Math.round(data.daily.temperature_2m_mean[0]);
+                const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
+                const minTemp = Math.round(data.daily.temperature_2m_min[0]);
+                const wind = Math.round(data.daily.wind_speed_10m_max[0] * 10) / 10;
+                const rain = data.daily.precipitation_sum[0] || 0;
+                const weatherCode = data.daily.weather_code[0];
+                
+                const dateObj = new Date(date);
+                const formattedDate = dateObj.toLocaleDateString('ru-RU', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                
+                resultDiv.innerHTML = `
+                    <div class="history-date">${city.name}, ${formattedDate}</div>
+                    <div class="history-temp">${avgTemp}°C</div>
+                    <div class="description">${weatherCodes[weatherCode] || '🌍 Неизвестно'}</div>
+                    <div class="history-details">
+                        <div class="history-detail-item">
+                            <span class="history-detail-label">Макс:</span> ${maxTemp}°C
+                        </div>
+                        <div class="history-detail-item">
+                            <span class="history-detail-label">Мин:</span> ${minTemp}°C
+                        </div>
+                        <div class="history-detail-item">
+                            <span class="history-detail-label">Ветер:</span> ${wind} км/ч
+                        </div>
+                        <div class="history-detail-item">
+                            <span class="history-detail-label">Осадки:</span> ${rain} мм
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.className = 'history-result error';
+                resultDiv.innerHTML = `❌ ${error.message}`;
+            }
+        }
+
         function getWeatherAdvice(data) {
             const { feelsLike, humidity, wind, climate } = data;
             
-            // Корректировка ощущений в зависимости от климата
             let adjustedFeels = feelsLike;
             
-            // В континентальном климате (Пекин) - сухой холод режет сильнее
             if (climate === 'continental') {
                 if (feelsLike < 15 && wind > 15) {
-                    adjustedFeels -= 3; // ветер пронизывает насквозь
+                    adjustedFeels -= 3;
                 }
                 if (feelsLike < 5) {
-                    adjustedFeels -= 2; // сухой холод режет сильнее
+                    adjustedFeels -= 2;
                 }
             }
             
-            // Во влажном субтропическом (Шанхай) - влажность усиливает всё
             if (climate === 'humid_subtropical') {
                 if (humidity > 70) {
                     if (feelsLike < 15) {
-                        adjustedFeels -= 4; // влажный холод пробирает до костей
+                        adjustedFeels -= 4;
                     } else if (feelsLike > 28) {
-                        adjustedFeels += 3; // влажная жара невыносима
+                        adjustedFeels += 3;
                     }
                 }
             }
             
-            // В тропическом (Гуанчжоу) - влажность + жара = баня
             if (climate === 'tropical') {
                 if (humidity > 75 && feelsLike > 25) {
-                    adjustedFeels += 4; // тропическая баня
+                    adjustedFeels += 4;
                 }
             }
             
-            // Определяем ощущения и одежду
             let feeling = '';
             let clothes = '';
             
@@ -323,9 +659,8 @@
                 container.innerHTML = weatherData.map((data, index) => {
                     const advice = getWeatherAdvice(data);
                     
-                    // Рекламные блоки для каждого города
                     let adBlock = '';
-                    if (index === 0) { // Пекин - VPN реклама
+                    if (index === 0) {
                         adBlock = `
                             <div class="ad-block">
                                 <a href="https://zgcvpn.com/" target="_blank" rel="noopener noreferrer">
@@ -334,7 +669,7 @@
                                 </a>
                             </div>
                         `;
-                    } else { // Шанхай и Гуанчжоу - заглушки
+                    } else {
                         adBlock = `
                             <div class="ad-block ad-placeholder">
                                 <div class="ad-title">📢 Тут может быть</div>
@@ -383,8 +718,10 @@
             }
         }
 
+        // Инициализация
+        initializeDateSelectors();
         displayWeather();
-        setInterval(displayWeather, 600000); // обновление каждые 10 минут
+        setInterval(displayWeather, 600000);
     </script>
 </body>
 </html>
